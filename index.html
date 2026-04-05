@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Школьный дисплей</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Inter", system-ui, sans-serif;
+      background-color: #0a0e27;
+      color: white;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0a0e27;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .app-shell {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .left-panel,
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .left-panel {
+      flex: 3;
+      background: linear-gradient(135deg, #11153f, #0d1025);
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+
+    .iframe-placeholder {
+      width: 100%;
+      height: 100%;
+      min-height: 80vh;
+      border-radius: 24px;
+      background: #1b1f3d;
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .iframe-placeholder::after {
+      content: "Слайд-шоу";
+      font-size: 2.5rem;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.65);
+      text-transform: uppercase;
+    }
+
+    .leaderboard {
+      flex: 1;
+      min-width: 320px;
+      background: #0c0f23;
+      padding: 32px;
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .panel-header {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #00ff88;
+    }
+
+    .panel-header span:last-child {
+      color: #ffffff;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .leaderboard-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px;
+      border-radius: 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .leaderboard-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.12));
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .leaderboard-item.fresh::before {
+      opacity: 1;
+    }
+
+    .leaderboard-item h3 {
+      font-size: 1.2rem;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .leaderboard-item span {
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+
+    .leaderboard-item .score {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: right;
+      color: #00ff88;
+    }
+
+    .leaderboard-item.rank-1 {
+      border-color: rgba(255, 215, 0, 0.7);
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.25);
+      animation: pulse 2.5s infinite;
+    }
+
+    .leaderboard-item.rank-2 {
+      border-color: rgba(192, 192, 192, 0.5);
+    }
+
+    .leaderboard-item.rank-3 {
+      border-color: rgba(205, 127, 50, 0.5);
+    }
+
+    .leaderboard-item .rank {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      width: 40px;
+      text-align: center;
+    }
+
+    .panel-note {
+      margin-top: auto;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.02);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .qr-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 12, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+      z-index: 10;
+    }
+
+    .qr-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .qr-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 32px;
+      width: min(420px, 90vw);
+      text-align: center;
+      color: #0a0e27;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .qr-card p {
+      margin: 0;
+    }
+
+    .qr-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .qr-image {
+      width: 300px;
+      height: 300px;
+      align-self: center;
+      border-radius: 24px;
+      border: 4px solid #0a0e27;
+      background: white;
+    }
+
+    .qr-subtitle {
+      font-size: 1rem;
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    .qr-countdown {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #00ff88;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        flex-direction: column;
+      }
+      .left-panel,
+      .right-panel {
+        min-width: 100%;
+      }
+      .leaderboard {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="left-panel">
+      <div class="iframe-placeholder"></div>
+    </div>
+    <div class="leaderboard">
+      <div class="panel-header">
+        <span>🏆</span>
+        <span>Топ оқушылар</span>
+      </div>
+      <ul id="leaderboard-list" class="leaderboard-list"></ul>
+      <p class="panel-note">Баллы Supabase-тен тікелей жаңарады.</p>
+    </div>
+  </div>
+  <div id="qr-overlay" class="qr-overlay">
+    <div class="qr-card">
+      <p class="qr-title">QR-кодты сканерле және викторинаға қатыс!</p>
+      <img
+        class="qr-image"
+        src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://quiz.example.com"
+        alt="QR code"
+      />
+      <p class="qr-subtitle">Топ тізімде өз атыңды көр! 👆</p>
+      <div class="qr-countdown" id="qr-countdown">15</div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://bogjvrqzxiadnmykvvwl.supabase.co";
+    const SUPABASE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvZ2p2cnF6eGlhZG5teWt2dndsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDM3MjgsImV4cCI6MjA5MDk3OTcyOH0.AfrnNpfdcFYG68UTLzGnxWc7kDrQs_z2iYf3on9gcIc";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const leaderboardList = document.getElementById("leaderboard-list");
+    const overlay = document.getElementById("qr-overlay");
+    const countdownEl = document.getElementById("qr-countdown");
+
+    async function loadScores() {
+      const { data, error } = await client
+        .from("scores")
+        .select("name,class,score")
+        .order("score", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error("Ошибка загрузки топа:", error);
+        return;
+      }
+
+      leaderboardList.innerHTML = data
+        .map((item, index) => {
+          const rankClass = `rank-${index + 1}`;
+          return `
+            <li class="leaderboard-item ${rankClass}">
+              <div class="rank">${index + 1}</div>
+              <div>
+                <h3>${item.name}</h3>
+                <span>${item.class || "—"}</span>
+              </div>
+              <div class="score">${item.score}</div>
+            </li>
+          `;
+        })
+        .join("");
+
+      requestAnimationFrame(() => {
+        document.querySelectorAll(".leaderboard-item").forEach((el) => {
+          el.classList.add("fresh");
+          setTimeout(() => el.classList.remove("fresh"), 600);
+        });
+      });
+    }
+
+    client
+      .channel("realtime-scores")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "scores" },
+        () => {
+          loadScores();
+        }
+      )
+      .subscribe();
+
+    loadScores();
+
+    let countdownInterval;
+
+    function showQrOverlay() {
+      let remaining = 15;
+      countdownEl.textContent = remaining;
+      overlay.classList.add("visible");
+
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+
+      countdownInterval = setInterval(() => {
+        remaining -= 1;
+        countdownEl.textContent = Math.max(remaining, 0);
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      setTimeout(() => {
+        overlay.classList.remove("visible");
+      }, 15000);
+    }
+
+    showQrOverlay();
+    setInterval(showQrOverlay, 150000);
+  </script>
+</body>
+</html>

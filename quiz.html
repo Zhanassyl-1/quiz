@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="kk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINOM SCHOOL — Ғылым Апталығы</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #f8fafc;
+        background-color: #0a0e27;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0e27;
+        padding: 16px;
+      }
+
+      .app-shell {
+        position: relative;
+        width: min(480px, 100%);
+        min-height: 100vh;
+        padding: 40px 24px 32px;
+        background: rgba(9, 13, 34, 0.95);
+        border-radius: 32px;
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-top: 10px;
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(18px);
+      }
+
+      .screen.active {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+      }
+
+      .screen > * {
+        z-index: 1;
+      }
+
+      .screen h1,
+      .screen h2,
+      .screen p {
+        margin: 0;
+      }
+
+      .headline {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7c3aed;
+      }
+
+      .accent {
+        color: #00ff88;
+      }
+
+      .input-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .input-row label {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .input-row input {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+        color: #f8fafc;
+        font-size: 1rem;
+      }
+
+      .input-row input:focus {
+        outline: 2px solid #7c3aed;
+      }
+
+      .class-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .class-button {
+        padding: 12px 0;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+        color: #f8fafc;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s ease, border 0.3s ease;
+      }
+
+      .class-button.selected {
+        background: rgba(124, 58, 237, 0.2);
+        border-color: #7c3aed;
+        color: #fff;
+        box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+      }
+
+      .primary-btn {
+        width: 100%;
+        border: none;
+        border-radius: 16px;
+        padding: 16px;
+        background: linear-gradient(135deg, #00ff88, #7c3aed);
+        color: #0a0e27;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .primary-btn:active {
+        transform: scale(0.98);
+      }
+
+      .quiz-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .student-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .student-meta span {
+        font-size: 0.95rem;
+      }
+
+      .score-chip {
+        font-size: 0.9rem;
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+      }
+
+      .progress-label {
+        font-size: 0.9rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(248, 250, 252, 0.7);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #00ff88, #7c3aed);
+        width: 0%;
+        border-radius: 12px;
+        transition: width 0.4s ease;
+      }
+
+      .question-number {
+        font-size: 3rem;
+        font-weight: 700;
+      }
+
+      .question-text {
+        font-size: 1.2rem;
+        line-height: 1.5;
+        min-height: 100px;
+      }
+
+      .options-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .option-button {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 14px 16px;
+        font-size: 1rem;
+        text-align: left;
+        background: rgba(255, 255, 255, 0.03);
+        color: #f8fafc;
+        cursor: pointer;
+        transition: background 0.3s ease, border 0.3s ease, transform 0.2s ease;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        min-height: 56px;
+      }
+
+      .option-button span.letter {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      }
+
+      .option-button.correct {
+        background: rgba(0, 255, 136, 0.15);
+        border-color: #00ff88;
+        color: #00ff88;
+      }
+
+      .option-button.incorrect {
+        background: rgba(255, 0, 0, 0.1);
+        border-color: rgba(255, 0, 0, 0.5);
+        color: #ff6b6b;
+      }
+
+      .result-screen,
+      .bonus-screen {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        position: relative;
+      }
+
+      .result-score {
+        font-size: 2rem;
+        font-weight: 700;
+      }
+
+      .result-rank {
+        font-size: 1rem;
+        margin-top: 6px;
+      }
+
+      .confetti-wrap {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .confetti-piece {
+        position: absolute;
+        width: 8px;
+        height: 20px;
+        border-radius: 10px;
+        background: #00ff88;
+        animation: confettiFall 3s linear infinite;
+        opacity: 0.9;
+      }
+
+      @keyframes confettiFall {
+        0% {
+          transform: translateY(-10px) rotateZ(0deg);
+        }
+        100% {
+          transform: translateY(110vh) rotateZ(360deg);
+        }
+      }
+
+      .bonus-card {
+        border-radius: 20px;
+        padding: 24px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(124, 58, 237, 0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .bonus-question {
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+
+      .bonus-options {
+        display: grid;
+        gap: 10px;
+      }
+
+      .bonus-option {
+        border-radius: 14px;
+        padding: 12px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.03);
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .bonus-option.correct {
+        border-color: #00ff88;
+        color: #00ff88;
+      }
+
+      .bonus-option.incorrect {
+        border-color: rgba(255, 0, 0, 0.5);
+        color: #ff6b6b;
+      }
+
+      .retry-btn {
+        margin-top: 14px;
+        background: transparent;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        padding: 12px 0;
+        color: #f8fafc;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .retry-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="screen register-screen active" data-screen="register">
+        <div class="headline">BINOM SCHOOL — Ғылым Апталығы 🔬</div>
+        <div class="input-row">
+          <label for="name-input">Атың кім?</label>
+          <input
+            id="name-input"
+            type="text"
+            placeholder="Атыңды жаз..."
+            autocomplete="off"
+          />
+        </div>
+        <p>Сыныпты таңда:</p>
+        <div class="class-grid" id="class-grid">
+          <button class="class-button" data-class="1">1</button>
+          <button class="class-button" data-class="2">2</button>
+          <button class="class-button" data-class="3">3</button>
+          <button class="class-button" data-class="4">4</button>
+          <button class="class-button" data-class="5">5</button>
+          <button class="class-button" data-class="6">6</button>
+          <button class="class-button" data-class="7">7</button>
+          <button class="class-button" data-class="8">8</button>
+          <button class="class-button" data-class="9">9</button>
+          <button class="class-button" data-class="10">10</button>
+          <button class="class-button" data-class="11">11</button>
+          <button class="class-button" data-class="Ерекше">Ерекше</button>
+        </div>
+        <button class="primary-btn" id="start-btn">Бастау →</button>
+      </section>
+
+      <section class="screen quiz-screen" data-screen="quiz">
+        <div class="quiz-header">
+          <div class="student-meta">
+            <span id="display-name">---</span>
+            <span id="display-class">Сынып: --</span>
+          </div>
+          <div class="score-chip">
+            Балл: <span id="score-value">0</span>
+          </div>
+        </div>
+        <div>
+          <div class="progress-label" id="progress-label">Сұрақ 0 / 0</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div class="question-number" id="question-number">1</div>
+        <div class="question-text" id="question-text">
+          Сұрақтар жүктелуде...
+        </div>
+        <div class="options-grid" id="options-grid"></div>
+      </section>
+
+      <section class="screen bonus-screen" data-screen="bonus">
+        <div class="bonus-card">
+          <p class="headline">🎁 БОНУС СҰРАҚ!</p>
+          <p>+20 балл мүмкіндігі!</p>
+          <div class="bonus-question" id="bonus-question">Жүктелуде...</div>
+          <div class="bonus-options" id="bonus-options"></div>
+        </div>
+      </section>
+
+      <section class="screen result-screen" data-screen="result">
+        <div class="confetti-wrap" id="confetti"></div>
+        <div class="result-score" id="final-score">Сен жинадың: 0 балл!</div>
+        <div class="result-rank" id="final-rank">Сенің орның: --</div>
+        <button class="retry-btn" id="retry-btn">Қайта ойна</button>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://bogjvrqzxiadnmykvvwl.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvZ2p2cnF6eGlhZG5teWt2dndsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDM3MjgsImV4cCI6MjA5MDk3OTcyOH0.AfrnNpfdcFYG68UTLzGnxWc7kDrQs_z2iYf3on9gcIc";
+      const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const state = {
+        userName: localStorage.getItem("binomStudentName") || "",
+        userClass: localStorage.getItem("binomStudentClass") || "",
+        quizCount: Number(localStorage.getItem("binomQuizCount") || "0"),
+        questions: [],
+        currentIndex: 0,
+        score: 0,
+        totalQuestions: 10,
+        waiting: false,
+      };
+
+      const screens = {
+        register: document.querySelector('[data-screen="register"]'),
+        quiz: document.querySelector('[data-screen="quiz"]'),
+        bonus: document.querySelector('[data-screen="bonus"]'),
+        result: document.querySelector('[data-screen="result"]'),
+      };
+
+      const nameInput = document.getElementById("name-input");
+      const classButtons = Array.from(document.querySelectorAll(".class-button"));
+      const startBtn = document.getElementById("start-btn");
+      const displayName = document.getElementById("display-name");
+      const displayClass = document.getElementById("display-class");
+      const scoreValue = document.getElementById("score-value");
+      const progressLabel = document.getElementById("progress-label");
+      const progressFill = document.getElementById("progress-fill");
+      const questionNumber = document.getElementById("question-number");
+      const questionText = document.getElementById("question-text");
+      const optionsGrid = document.getElementById("options-grid");
+      const bonusQuestionEl = document.getElementById("bonus-question");
+      const bonusOptionsEl = document.getElementById("bonus-options");
+      const finalScoreEl = document.getElementById("final-score");
+      const finalRankEl = document.getElementById("final-rank");
+      const retryBtn = document.getElementById("retry-btn");
+      const confettiContainer = document.getElementById("confetti");
+
+      const LETTERS = ["А", "Б", "В", "Г"];
+      const letterMap = { A: "А", B: "Б", C: "В", D: "Г" };
+
+      const setActiveScreen = (key) => {
+        Object.values(screens).forEach((screen) => screen.classList.remove("active"));
+        screens[key].classList.add("active");
+      };
+
+      const markClassButton = (value) => {
+        classButtons.forEach((button) => {
+          button.classList.toggle("selected", button.dataset.class === value);
+        });
+      };
+
+      const persistProfile = () => {
+        localStorage.setItem("binomStudentName", state.userName);
+        localStorage.setItem("binomStudentClass", state.userClass);
+      };
+
+      const updateStudentInfo = () => {
+        displayName.textContent = state.userName || "Қатысушы";
+        displayClass.textContent = `Сынып: ${state.userClass || "--"}`;
+      };
+
+      const shuffle = (array) => {
+        const cloned = [...array];
+        for (let i = cloned.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+        }
+        return cloned;
+      };
+
+      const normalizeOptions = (input) => {
+        if (!input) return [];
+        if (Array.isArray(input)) return input.slice(0, 4);
+        if (typeof input === "object") {
+          return LETTERS.map((letter) => input[letter] || input[letter.toLowerCase()] || "");
+        }
+        try {
+          const parsed = JSON.parse(input);
+          if (Array.isArray(parsed)) return parsed.slice(0, 4);
+        } catch (err) {
+          //
+        }
+        if (typeof input === "string") {
+          return input.split("|").map((text) => text.trim()).slice(0, 4);
+        }
+        return [];
+      };
+
+      const determineCorrectLetter = (value, options) => {
+        if (!value && options.length) return LETTERS[0];
+        const normalized = (value + "").trim().toUpperCase();
+        if (letterMap[normalized]) return letterMap[normalized];
+        if (LETTERS.includes(normalized)) return normalized;
+        const numeric = Number(normalized);
+        if (!Number.isNaN(numeric) && numeric >= 1 && numeric <= LETTERS.length) {
+          return LETTERS[numeric - 1];
+        }
+        const found = options.findIndex(
+          (option) => option && option.trim().toLowerCase() === normalized.toLowerCase()
+        );
+        if (found >= 0) return LETTERS[found];
+        return LETTERS[0];
+      };
+
+      const updateProgress = () => {
+        const current = Math.min(state.currentIndex + 1, state.totalQuestions);
+        progressLabel.textContent = \`Сұрақ \${current} / \${state.totalQuestions}\`;
+        progressFill.style.width = \`\${(current / state.totalQuestions) * 100}%\`;
+        questionNumber.textContent = current;
+      };
+
+      const renderQuestion = () => {
+        const question = state.questions[state.currentIndex];
+        updateProgress();
+        if (!question) {
+          questionText.textContent = "Бұл сыныпқа сұрақтар табылмады.";
+          optionsGrid.innerHTML = "";
+          return;
+        }
+        const options = normalizeOptions(question.options);
+        question.correctLetter = determineCorrectLetter(question.correct, options);
+        questionText.textContent = question.question || "Сұрақ дайындалуда...";
+        optionsGrid.innerHTML = "";
+        options.forEach((optionText, index) => {
+          const letter = LETTERS[index];
+          if (!optionText) return;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "option-button";
+          button.dataset.letter = letter;
+          const letterSpan = document.createElement("span");
+          letterSpan.className = "letter";
+          letterSpan.textContent = letter;
+          const textSpan = document.createElement("span");
+          textSpan.textContent = optionText;
+          button.append(letterSpan, textSpan);
+          button.addEventListener("click", () => handleAnswer(letter, button));
+          optionsGrid.appendChild(button);
+        });
+        updateProgress();
+      };
+
+      const updateScore = () => {
+        scoreValue.textContent = state.score;
+      };
+
+      const goToNextQuestion = () => {
+        state.currentIndex += 1;
+        if (state.currentIndex >= state.totalQuestions) {
+          finishQuiz();
+          return;
+        }
+        renderQuestion();
+      };
+
+      const handleAnswer = (letter, button) => {
+        if (state.waiting) return;
+        const question = state.questions[state.currentIndex];
+        if (!question) return;
+        state.waiting = true;
+        const correctLetter = question.correctLetter;
+        if (letter === correctLetter) {
+          button.classList.add("correct");
+          state.score += 10;
+        } else {
+          button.classList.add("incorrect");
+          const correctButton = optionsGrid.querySelector(
+            \`[data-letter="\${correctLetter}"]\`
+          );
+          if (correctButton) correctButton.classList.add("correct");
+        }
+        updateScore();
+        Array.from(optionsGrid.querySelectorAll(".option-button")).forEach((btn) => {
+          btn.disabled = true;
+        });
+        setTimeout(() => {
+          state.waiting = false;
+          goToNextQuestion();
+        }, 1500);
+      };
+
+      const fetchQuestions = async () => {
+        try {
+          const { data, error } = await client
+            .from("questions")
+            .select("*")
+            .eq("class", state.userClass)
+            .limit(100);
+          if (error) throw error;
+          const pool = data || [];
+          const selection = shuffle(pool).slice(0, 10);
+          state.questions = selection;
+          state.totalQuestions = Math.max(selection.length, 1);
+          state.currentIndex = 0;
+          state.score = 0;
+          updateScore();
+          renderQuestion();
+        } catch (err) {
+          console.error("Ошибка вопросов", err);
+          state.questions = [];
+          state.totalQuestions = 1;
+          state.currentIndex = 0;
+          renderQuestion();
+        }
+      };
+
+      const fetchBonusQuestion = async () => {
+        try {
+          const { data, error } = await client.from("bonus_questions").select("*");
+          if (error) throw error;
+          if (!data || data.length === 0) return null;
+          const random = data[Math.floor(Math.random() * data.length)];
+          const options = normalizeOptions(random.options);
+          return {
+            ...random,
+            options: options,
+            correctLetter: determineCorrectLetter(random.correct, options),
+          };
+        } catch (err) {
+          console.warn("Нет бонусной таблицы", err);
+          return null;
+        }
+      };
+
+      const renderBonus = (question) => {
+        if (!question) return;
+        bonusQuestionEl.textContent = question.question || "Бонус сұрақ";
+        bonusOptionsEl.innerHTML = "";
+        question.options.forEach((option, index) => {
+          const letter = LETTERS[index];
+          const optionBtn = document.createElement("button");
+          optionBtn.type = "button";
+          optionBtn.className = "bonus-option";
+          optionBtn.dataset.letter = letter;
+          optionBtn.textContent = \`\${letter}. \${option}\`;
+          optionBtn.addEventListener("click", () =>
+            handleBonusAnswer(letter, optionBtn, question)
+          );
+          bonusOptionsEl.appendChild(optionBtn);
+        });
+      };
+
+      const handleBonusAnswer = (letter, button, question) => {
+        if (state.waiting) return;
+        state.waiting = true;
+        const correctLetter = question.correctLetter;
+        if (letter === correctLetter) {
+          button.classList.add("correct");
+          state.score += 20;
+        } else {
+          button.classList.add("incorrect");
+          const correctButton = bonusOptionsEl.querySelector(
+            \`[data-letter="\${correctLetter}"]\`
+          );
+          if (correctButton) correctButton.classList.add("correct");
+        }
+        updateScore();
+        Array.from(bonusOptionsEl.querySelectorAll(".bonus-option")).forEach((btn) => {
+          btn.disabled = true;
+        });
+        setTimeout(() => {
+          state.waiting = false;
+          showResult();
+        }, 1500);
+      };
+
+      const finishQuiz = async () => {
+        state.quizCount += 1;
+        localStorage.setItem("binomQuizCount", state.quizCount.toString());
+        if (state.quizCount % 3 === 0) {
+          const bonus = await fetchBonusQuestion();
+          if (bonus) {
+            renderBonus(bonus);
+            setActiveScreen("bonus");
+            return;
+          }
+        }
+        showResult();
+      };
+
+      const showResult = async () => {
+        setActiveScreen("result");
+        finalScoreEl.textContent = \`Сен жинадың: \${state.score} балл!\`;
+        await saveScore();
+        const rank = await fetchRank();
+        finalRankEl.textContent = rank ? \`Сенің орның: #\${rank} 🏆\` : "Сенің орның: --";
+        if (state.score > 70) {
+          startConfetti();
+        }
+      };
+
+      const startConfetti = () => {
+        confettiContainer.innerHTML = "";
+        const colors = ["#00ff88", "#7c3aed", "#facc15"];
+        for (let i = 0; i < 40; i += 1) {
+          const piece = document.createElement("span");
+          piece.className = "confetti-piece";
+          piece.style.left = \`\${Math.random() * 100}%\`;
+          piece.style.background = colors[i % colors.length];
+          piece.style.animationDuration = \`\${2 + Math.random() * 2}s\`;
+          piece.style.animationDelay = \`\${Math.random() * 2}s\`;
+          confettiContainer.appendChild(piece);
+        }
+        setTimeout(() => {
+          confettiContainer.innerHTML = "";
+        }, 4500);
+      };
+
+      const fetchRank = async () => {
+        try {
+          const { data, error } = await client
+            .from("scores")
+            .select("name, class, score")
+            .order("score", { ascending: false })
+            .limit(200);
+          if (error) throw error;
+          if (!data) return null;
+          let rank = 1;
+          for (const entry of data) {
+            if (entry.score > state.score) {
+              rank += 1;
+            } else {
+              break;
+            }
+          }
+          return rank;
+        } catch (err) {
+          console.error("Rank load failed", err);
+          return null;
+        }
+      };
+
+      const saveScore = async () => {
+        try {
+          if (!state.userName || !state.userClass) return;
+          const { data, error } = await client
+            .from("scores")
+            .select("*")
+            .eq("name", state.userName)
+            .eq("class", state.userClass)
+            .maybeSingle();
+          if (error) throw error;
+          if (!data || state.score > data.score) {
+            await client.from("scores").upsert({
+              name: state.userName,
+              class: state.userClass,
+              score: state.score,
+            });
+          }
+        } catch (err) {
+          console.error("Score save failed", err);
+        }
+      };
+
+      const handleRetry = () => {
+        setActiveScreen("quiz");
+        confettiContainer.innerHTML = "";
+        fetchQuestions();
+      };
+
+      classButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          state.userClass = button.dataset.class;
+          markClassButton(state.userClass);
+        });
+      });
+
+      startBtn.addEventListener("click", () => {
+        const nameValue = nameInput.value.trim();
+        if (!nameValue) {
+          nameInput.focus();
+          return;
+        }
+        if (!state.userClass) {
+          classButtons[0]?.focus();
+          return;
+        }
+        state.userName = nameValue;
+        persistProfile();
+        updateStudentInfo();
+        setActiveScreen("quiz");
+        fetchQuestions();
+      });
+
+      retryBtn.addEventListener("click", handleRetry);
+
+      if (state.userName) {
+        nameInput.value = state.userName;
+      }
+      if (state.userClass) {
+        markClassButton(state.userClass);
+      }
+      updateStudentInfo();
+    </script>
+  </body>
+</html>

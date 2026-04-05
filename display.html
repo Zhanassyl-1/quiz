@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ғылымның 5 түсі</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      color: #f8fafc;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #0a0e27;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background-color: #0a0e27;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    .page {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .slideshow-panel {
+      position: relative;
+      flex: 3;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .slideshow {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1.2s ease-in-out;
+      will-change: opacity;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slideshow-text {
+      position: absolute;
+      bottom: 32px;
+      left: 32px;
+      max-width: 380px;
+      padding: 14px 20px;
+      background: rgba(10, 14, 27, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      font-size: 1.2rem;
+      line-height: 1.4;
+      letter-spacing: 0.02em;
+      color: #f8fafc;
+      backdrop-filter: blur(6px);
+    }
+
+    .side-panel {
+      flex: 1;
+      min-width: 280px;
+      background: #0f1535;
+      border-left: 1px solid #7c3aed;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .leaderboard-panel {
+      flex: 7;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .leaderboard-panel h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #f4f7ff;
+    }
+
+    .leaderboard {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 40px 2fr 1fr 80px;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #f8fafc;
+      font-weight: 500;
+      gap: 8px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .leaderboard.refreshing .leaderboard-row {
+      animation: fadeIn 0.5s ease both;
+    }
+
+    .leaderboard-row::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      z-index: -1;
+    }
+
+    .leaderboard-row {
+      position: relative;
+    }
+
+    .leaderboard-row.top-one {
+      background: linear-gradient(135deg, #ffe082, #fdd835);
+      color: #0f1535;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .leaderboard-row.top-two {
+      background: linear-gradient(135deg, #cfd8dc, #b0bec5);
+      color: #0a0e27;
+    }
+
+    .leaderboard-row.top-three {
+      background: linear-gradient(135deg, #d7ccc8, #bcaaa4);
+      color: #0a0e27;
+    }
+
+    .leaderboard-row span.position {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .leaderboard-row span.student-name {
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .leaderboard-row span.student-class,
+    .leaderboard-row span.student-score {
+      text-align: right;
+      font-size: 0.95rem;
+      color: inherit;
+    }
+
+    .leaderboard-row.placeholder {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.5);
+      animation: shimmer 1.4s ease-in-out infinite;
+    }
+
+    .qr-panel {
+      flex: 3;
+      background: #1a2040;
+      border-top: 1px solid #7c3aed;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 18px;
+    }
+
+    .qr-panel p {
+      margin: 0;
+      font-size: 1rem;
+      color: #f1f5f9;
+      font-weight: 500;
+    }
+
+    .qr-panel img {
+      width: 160px;
+      height: 160px;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      background: #fff;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0px rgba(255, 224, 130, 0.6);
+      }
+      50% {
+        transform: scale(1.01);
+        box-shadow: 0 0 20px rgba(255, 224, 130, 0.3);
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 0.9;
+      }
+      100% {
+        opacity: 0.6;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .page {
+        flex-direction: column;
+      }
+
+      .slideshow-panel {
+        height: 60vh;
+      }
+
+      .side-panel {
+        flex-direction: column;
+        border-left: none;
+        border-top: 1px solid #7c3aed;
+      }
+
+      .leaderboard-panel {
+        flex: unset;
+      }
+
+      .qr-panel {
+        flex: unset;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="slideshow-panel">
+      <div class="slideshow" aria-live="polite" aria-label="Ғылымның 5 түсі слайд-шоу"></div>
+      <div class="slideshow-text">
+        Ғылымның 5 түсі: Химия мен Биология бояулары
+      </div>
+    </section>
+    <section class="side-panel">
+      <div class="leaderboard-panel">
+        <h2>🏆 Топ оқушылар</h2>
+        <div id="leaderboard" class="leaderboard"></div>
+      </div>
+      <div class="qr-panel">
+        <p>QR-кодты сканерле!</p>
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=quiz.html"
+          alt="Викторинаға қатысу үшін QR код"
+        />
+        <p>Викторинаға қатыс және топ тізімге кір! 🏆</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const photoFiles = [
+      "photos/Screenshot From 2026-04-05 23-21-01.png",
+      "photos/Screenshot From 2026-04-05 23-21-05.png",
+      "photos/Screenshot From 2026-04-05 23-21-08.png",
+      "photos/Screenshot From 2026-04-05 23-21-13.png",
+      "photos/Screenshot From 2026-04-05 23-21-18.png",
+      "photos/Screenshot From 2026-04-05 23-21-21.png",
+      "photos/Screenshot From 2026-04-05 23-21-27.png",
+      "photos/Screenshot From 2026-04-05 23-21-33.png"
+    ];
+
+    const slideshowContainer = document.querySelector(".slideshow");
+
+    photoFiles.forEach((photo) => {
+      const img = document.createElement("img");
+      img.src = photo;
+      img.alt = "Ғылым слайд";
+      img.className = "slide";
+      slideshowContainer.appendChild(img);
+    });
+
+    const slides = document.querySelectorAll(".slide");
+    let currentIndex = 0;
+
+    if (slides.length) {
+      slides[currentIndex].classList.add("active");
+      setInterval(() => {
+        slides[currentIndex].classList.remove("active");
+        currentIndex = (currentIndex + 1) % slides.length;
+        slides[currentIndex].classList.add("active");
+      }, 20000);
+    }
+
+    const SUPABASE_URL = "https://bogjvrqzxiadnmykvvwl.supabase.co";
+    const SUPABASE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvZ2p2cnF6eGlhZG5teWt2dndsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDM3MjgsImV4cCI6MjA5MDk3OTcyOH0.AfrnNpfdcFYG68UTLzGnxWc7kDrQs_z2iYf3on9gcIc";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const leaderboardEl = document.getElementById("leaderboard");
+
+    const placeholderMarkup = () =>
+      new Array(5)
+        .fill("")
+        .map(
+          (_, index) => `
+            <div class="leaderboard-row placeholder">
+              <span class="position">${index + 1}.</span>
+              <span class="student-name">Күтуде...</span>
+              <span class="student-class">--</span>
+              <span class="student-score">--</span>
+            </div>
+          `
+        )
+        .join("");
+
+    const renderLeaderboard = (students) => {
+      const html = students
+        .map((student, index) => {
+          const place = index + 1;
+          const classes = ["top-one", "top-two", "top-three"];
+          const className = classes[index] || "";
+          return `
+            <div class="leaderboard-row ${className}">
+              <span class="position">${place}.</span>
+              <span class="student-name">${student.name || "Қатысушы"}</span>
+              <span class="student-class">${student.class || student.classroom || "-"}</span>
+              <span class="student-score">${student.score ?? "-"}</span>
+            </div>
+          `;
+        })
+        .join("");
+
+      leaderboardEl.innerHTML = html;
+      leaderboardEl.classList.add("refreshing");
+      setTimeout(() => leaderboardEl.classList.remove("refreshing"), 1200);
+    };
+
+    const loadTopStudents = async () => {
+      leaderboardEl.innerHTML = placeholderMarkup();
+      try {
+        const { data, error } = await client
+          .from("scores")
+          .select("name, class, score")
+          .order("score", { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          leaderboardEl.innerHTML = placeholderMarkup();
+          return;
+        }
+
+        renderLeaderboard(data);
+      } catch (err) {
+        console.error("Leaderboard load failed", err);
+        leaderboardEl.innerHTML = placeholderMarkup();
+      }
+    };
+
+    loadTopStudents();
+
+    const scoresChannel = client
+      .channel("scores_updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "scores" },
+        () => {
+          loadTopStudents();
+        }
+      )
+      .subscribe();
+  </script>
+</body>
+</html>
